@@ -1,13 +1,8 @@
-# works for an even amount of students
-# 4/1/2018 9:00:26,rcvelasco01@junk.com,Nike,Sports,Whatever I Can Find,Football,Gucci,Casual,Funny,Comedy,Dick's Sporting Goods,Hydroflask,Angevine,Engineering,Other,Barack/Michelle,Kim,hey I could've dropped my croissant,Brownies,Movies,Instagram,Black Coffee,LA,Humor,Indie / Folk,Hash Browns,Beach/Island,Face Swap,A,Summer,Boba,Chance,12th,,,,
-#break up by grade level first
-
 import csv
-import json
 import pandas as pd
 import itertools
-
-data = ('/Users/jackmanning/Downloads/DATA MATCH FORM (Responses) - Form Responses 1.csv')
+# data must be csv
+data = ('/path/to/data')
 csv_file = pd.read_csv(data)
 # data cleaning stuff
 emails = pd.read_csv(data,  usecols=['Email Address'])
@@ -21,13 +16,11 @@ data_titles = csv_file.columns[2:-4]
 data_points = pd.read_csv(data,  usecols=data_titles)
 data_points = data_points.values.tolist()
 
-data_dict = {
-
-}
+data_dict = {}
 # gets dictionary with email as key and responses as value
 for email in email_list:
     
-    data_dict[email] = {'responses':data_points[email_list.index(email)], 'matches':None, 'email':email}
+    data_dict[email] = {'responses':data_points[email_list.index(email)], 'matches':None}
 
 # empty list and dict to be used later
 freshmen = {}
@@ -50,8 +43,10 @@ for em in data_dict:
 
 
 matches = {}
+# to make sure people don't get multiple matches
 used = []
-print(len(sophmores))
+used_2 = []
+
 # get's match for each student
 def get_matches(grade):
     for email in grade:
@@ -70,18 +65,18 @@ def get_matches(grade):
                     s_responses = z.get('responses')[2:]
                         #for response in s_responses:
                     for a_r, b_r in zip(e_responses, s_responses):
-                        if a_r == b_r and student != email:
+                        if a_r == b_r and student != email and student not in used:
                             score += 1
                         if score > c_match.get('score'):
                             c_match['leader'] = student
                             c_match['score'] = score
-                # check if student is the last in list, if it is then scrap not in used clasue and give it two partners
+                
                 x = [i for i in grade]
-                test = x.index(student)
+                last_student = x.index(student)
                 
+                # if last student of grade level is in an uneven 
+                if (len(grade) - 1) == last_student and len(grade)%2!=0:
                 
-                if len(grade) == test and len(grade)%2==0:
-                    
                     score = 0
                     z = data_dict.get(student)
                     s_responses = z.get('responses')[2:]
@@ -90,32 +85,37 @@ def get_matches(grade):
                         if a_r == b_r and student != email:
                             score += 1
                         if score > c_match.get('score'):
-                            score = 0
                             c_match['leader'] = student
                             c_match['score'] = score
                 
-                        
-            if c_match.get('leader') in used:
+                
+                   
+            if c_match.get('leader') in used and c_match.get('leader') not in used_2:
                 x = matches.get(c_match.get('leader'))
                 matches[email] = [c_match.get('leader'), x]
                 matches[c_match.get('leader')] = [email, x]
                 matches[str(x)] = [email, c_match.get('leader')]
                 used.append(email)
+                used_2.append(c_match.get('leader'))
+                used_2.append(x)
+
                 
-            else:
-                
-                matches[email] = c_match.get('leader')
-                matches[c_match.get('leader')] = email
+            if c_match.get('leader') not in used:
+                y = c_match.get('leader')
+                matches[email] = y
+                matches[y] = email
 
                 used.append(c_match.get('leader'))
-    
-    return matches
+                used.append(email)
 
-
-get_matches(juniors)
-
+#gets match for each class
 get_matches(freshmen)
+get_matches(sophmores)
+get_matches(juniors)
+get_matches(senior)
 
 df = pd.DataFrame.from_dict(matches, orient='index')
 
-df.to_csv('/Users/jackmanning/Documents/Student Valentine Match /match.csv', index = True)
+
+df.to_csv('path/to/file/for/matches', index = True)
+
